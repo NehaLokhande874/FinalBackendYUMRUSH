@@ -23,12 +23,13 @@ import { socketHandler } from "./socket.js"
 const app = express()
 const server = http.createServer(app)
 
-// UPDATED: Added your Vercel URLs to the allowlist
+// UPDATED: Added the specific Vercel Preview URL from your screenshot
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
   "https://final-frontend-yumrush.vercel.app",
+  "https://final-frontend-yumrush-13oo02tnb-nehalokhande874s-projects.vercel.app",
   "https://final-frontend-yumrush-rle2kkjlc-nehalokhande874s-projects.vercel.app"
 ]
 
@@ -48,7 +49,8 @@ const io = new Server(server, {
       return callback(new Error("Not allowed by CORS"))
     },
     credentials: true,
-    methods: ['POST', 'GET']
+    // UPDATED: Added common methods to ensure Socket.io stability
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
   }
 })
 
