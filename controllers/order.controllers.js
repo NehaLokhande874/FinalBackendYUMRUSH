@@ -3,7 +3,6 @@ import Order from "../models/order.model.js"
 import Shop from "../models/shop.model.js"
 import User from "../models/user.model.js"
 import Offer from "../models/offer.model.js"
-
 import { sendDeliveryOtpMail } from "../utils/mail.js"
 import RazorPay from "razorpay"
 import dotenv from "dotenv"
@@ -77,8 +76,7 @@ export const placeOrder = async (req, res) => {
         }
 
         const shopOrders = shopOrderResults
-        
-        // Handle Coupon Usage
+
         if (couponCode) {
             await Offer.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } })
         }
@@ -121,10 +119,9 @@ export const placeOrder = async (req, res) => {
         })
 
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
-        await newOrder.populate("shopOrders.shop", "shopName")
+        await newOrder.populate("shopOrders.shop", "name image city")
         await newOrder.populate("shopOrders.owner", "name socketId")
         await newOrder.populate("user", "name email mobile")
-
         const io = req.app.get('io')
         if (io) {
             newOrder.shopOrders.forEach(shopOrder => {
@@ -169,7 +166,7 @@ export const verifyPayment = async (req, res) => {
         await order.save()
 
         await order.populate("shopOrders.shopOrderItems.item", "name image price")
-        await order.populate("shopOrders.shop", "shopName")
+        await order.populate("shopOrders.shop", "name image city")
         await order.populate("shopOrders.owner", "name socketId")
         await order.populate("user", "name email mobile")
 
@@ -205,14 +202,14 @@ export const getMyOrders = async (req, res) => {
         if (user.role == "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "shopName")  // ✅ FIXED
+                .populate("shopOrders.shop", "name image city")
                 .populate("shopOrders.owner", "name email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
             return res.status(200).json(orders)
         } else if (user.role == "owner") {
             const orders = await Order.find({ "shopOrders.owner": req.userId })
                 .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "shopName")  // ✅ FIXED
+                .populate("shopOrders.shop", "name image city")
                 .populate("user")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
                 .populate("shopOrders.assignedDeliveryBoy", "fullName mobile")
@@ -268,7 +265,6 @@ export const updateOrderStatus = async (req, res) => {
             const busyIdSet = new Set(busyIds.map(id => String(id)))
             const availableBoys = nearByDeliveryBoys.filter(b => !busyIdSet.has(String(b._id)))
             const candidates = availableBoys.map(b => b._id)
-
             if (candidates.length == 0) {
                 await order.save()
                 return res.json({
@@ -305,7 +301,7 @@ export const updateOrderStatus = async (req, res) => {
                             sentTo: boy._id,
                             assignmentId: deliveryAssignment._id,
                             orderId: deliveryAssignment.order._id,
-                            shopName: deliveryAssignment.shop.shopName,
+                            name: deliveryAssignment.shop.name,
                             deliveryAddress: deliveryAssignment.order.deliveryAddress,
                             items: deliveryAssignment.order.shopOrders.find(so => so._id.equals(deliveryAssignment.shopOrderId)).shopOrderItems || [],
                             subtotal: deliveryAssignment.order.shopOrders.find(so => so._id.equals(deliveryAssignment.shopOrderId))?.subtotal
@@ -317,7 +313,7 @@ export const updateOrderStatus = async (req, res) => {
 
         await order.save()
         const updatedShopOrder = order.shopOrders.find(o => o.shop == shopId)
-        await order.populate("shopOrders.shop", "shopName")
+        await order.populate("shopOrders.shop", "name image city")
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile")
         await order.populate("user", "socketId")
 
@@ -353,7 +349,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
         const formated = assignments.map(a => ({
             assignmentId: a._id,
             orderId: a.order._id,
-            shopName: a.shop.shopName,
+            name: a.shop.name,
             deliveryAddress: a.order.deliveryAddress,
             items: a.order.shopOrders.find(so => so._id.equals(a.shopOrderId)).shopOrderItems || [],
             subtotal: a.order.shopOrders.find(so => so._id.equals(a.shopOrderId))?.subtotal
@@ -437,7 +433,7 @@ export const getCurrentOrder = async (req, res) => {
             assignedTo: req.userId,
             status: "assigned"
         })
-            .populate("shop", "shopName location")
+            .populate("shop", "name location")
             .populate("assignedTo", "fullName email mobile location")
             .populate({
                 path: "order",
@@ -611,7 +607,7 @@ export const verifyDeliveryOtp = async (req, res) => {
             }
         }
 
-        return res.status(200).json({ message: "Order Delivered Successfully! 🎉" })
+        return res.status(200).json({ message: "Order Delivered Successfully!" })
     } catch (error) {
         console.error("verifyDeliveryOtp error:", error)
         return res.status(500).json({ message: `verify delivery otp error: ${error.message}` })
