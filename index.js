@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser"
 import authRouter from "./routes/auth.routes.js"
 import cors from "cors"
 import userRouter from "./routes/user.routes.js"
-
 import itemRouter from "./routes/item.routes.js"
 import shopRouter from "./routes/shop.routes.js"
 import orderRouter from "./routes/order.routes.js"
@@ -15,7 +14,6 @@ import complaintRouter from "./routes/complaint.routes.js"
 import adminRouter from "./routes/admin.routes.js"
 import ratingRouter from "./routes/rating.routes.js"
 import offerRouter from "./routes/offer.routes.js"
-
 import http from "http"
 import { Server } from "socket.io"
 import { socketHandler } from "./socket.js"
@@ -23,7 +21,6 @@ import { socketHandler } from "./socket.js"
 const app = express()
 const server = http.createServer(app)
 
-// UPDATED: Added the specific Vercel Preview URL from your screenshot
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -34,12 +31,11 @@ const allowedOrigins = [
 ]
 
 const isAllowedOrigin = (origin) => {
-  // Allow requests with no origin (like mobile apps or curl requests)
   if (!origin) return true
   if (allowedOrigins.includes(origin)) return true
-
-  // Allow Vite dev servers running on localhost with any port.
-  return /^http:\/\/localhost:\d+$/.test(origin)
+  if (/^http:\/\/localhost:\d+$/.test(origin)) return true
+  if (/^https:\/\/.*nehalokhande874s-projects\.vercel\.app$/.test(origin)) return true
+  return false
 }
 
 const io = new Server(server, {
@@ -49,7 +45,6 @@ const io = new Server(server, {
       return callback(new Error("Not allowed by CORS"))
     },
     credentials: true,
-    // UPDATED: Added common methods to ensure Socket.io stability
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
   }
 })
@@ -58,7 +53,6 @@ app.set("io", io)
 
 const PORT = process.env.PORT || 8000
 
-// Apply CORS middleware to Express
 app.use(cors({
   origin: (origin, callback) => {
     if (isAllowedOrigin(origin)) return callback(null, true)
@@ -70,7 +64,6 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
-// Routes
 app.use("/api/auth", authRouter)
 app.use("/api/user", userRouter)
 app.use("/api/shop", shopRouter)
@@ -87,7 +80,6 @@ const startApp = async () => {
   server.listen(PORT, () => {
     console.log(`server started at ${PORT}`)
   })
-
   const dbConnected = await connectDb()
   if (!dbConnected) {
     console.warn("Warning: MongoDB not connected. API routes are available but DB requests may fail.")
