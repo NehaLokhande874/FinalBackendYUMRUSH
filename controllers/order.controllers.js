@@ -535,7 +535,12 @@ export const sendDeliveryOtp = async (req, res) => {
         shopOrder.otpExpires = Date.now() + 5 * 60 * 1000
         await order.save()
 
-        await sendDeliveryOtpMail(order.user, otp)
+        try {
+            await sendDeliveryOtpMail(order.user, otp)
+        } catch (mailError) {
+            console.error("Failed to send OTP email:", mailError);
+            return res.status(500).json({ message: "OTP generated but failed to send email. Please check the backend EMAIL and PASS environment variables on Render." })
+        }
 
         return res.status(200).json({
             message: `OTP sent successfully to ${order.user.fullName}`

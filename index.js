@@ -31,11 +31,11 @@ const allowedOrigins = [
 ]
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true
-  if (allowedOrigins.includes(origin)) return true
-  if (/^http:\/\/localhost:\d+$/.test(origin)) return true
-  if (/^https:\/\/.*nehalokhande874s-projects\.vercel\.app$/.test(origin)) return true
-  return false
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.startsWith("http://localhost:")) return true;
+  if (origin.endsWith(".vercel.app")) return true;
+  return false;
 }
 
 const io = new Server(server, {

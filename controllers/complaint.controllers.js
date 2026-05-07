@@ -17,7 +17,7 @@ export const createComplaint = async (req, res) => {
     const io = req.app.get('io')
     if (io) {
       await complaint.populate("userId", "fullName email mobile")
-      await complaint.populate("restaurantId", "shopName")
+      await complaint.populate("restaurantId", "name")
       await complaint.populate("orderId", "_id totalAmount createdAt")
       io.emit('newComplaint', complaint)
     }
@@ -31,7 +31,7 @@ export const createComplaint = async (req, res) => {
 export const getMyComplaints = async (req, res) => {
   try {
     const complaints = await Complaint.find({ userId: req.userId })
-      .populate("restaurantId", "shopName")
+      .populate("restaurantId", "name")
       .populate("orderId", "_id totalAmount createdAt")
       .sort({ createdAt: -1 });
     return res.status(200).json(complaints);
@@ -44,7 +44,7 @@ export const getAllComplaints = async (req, res) => {
   try {
     const complaints = await Complaint.find()
       .populate("userId", "fullName email mobile")
-      .populate("restaurantId", "shopName")
+      .populate("restaurantId", "name")
       .populate("orderId", "_id totalAmount createdAt")
       .sort({ createdAt: -1 });
     return res.status(200).json(complaints);
